@@ -1,1 +1,46 @@
-# FunMDL-group-4
+# FunMDL-group-4 — AugMix Reproduction
+
+Reproduction of **AugMix: A Simple Data Processing Method to Improve Robustness and Uncertainty** (Hendrycks et al., ICLR 2020) — [[paper]](https://arxiv.org/abs/1912.02781) [[original code]](https://github.com/google-research/augmix)
+
+Full re-implementation from scratch. Experiments focus on CIFAR-10/100 (ImageNet out of scope due to compute power needed).
+
+## Install
+
+Requires [uv](https://github.com/astral-sh/uv).
+
+```bash
+git clone https://github.com/zhenicha/FunMDL-group-4.git
+cd FunMDL-group-4
+uv sync
+```
+
+## Structure
+
+```
+src/augmix/
+├── augmentations.py   # AugMix ops + augment_and_mix()
+├── loss.py            # Jensen-Shannon divergence consistency loss
+├── models.py          # WideResNet, ResNeXt, DenseNet, AllConvNet
+├── datasets.py        # CIFAR-10/100 + -C / -P variants
+├── metrics.py         # mCE, mFP, RMS calibration error, Brier score
+└── train.py           # training loop
+
+experiments/
+├── figure1_augmix_visualization.py   # AugMix vs CutOut/MixUp/CutMix
+├── figure3_augmentation_drift.py     # image drift from deep aug chains
+├── figure5_bar_chart.py              # CIFAR-10-C error bar chart
+├── figure6_cifar_p_calibration.py    # mFP + calibration (Tables 5 & 6)
+├── figure9_fourier_sensitivity.py    # Fourier sensitivity heatmap
+├── figure10_augmentation_ops.py      # illustration of each aug op
+├── figure12_per_corruption.py        # per-corruption error breakdown
+├── table1_cifar_corruption.py        # CIFAR-10/100-C across architectures
+└── table4_ablation.py                # ablation: diversity / JSD / mixing
+```
+
+## Usage
+
+```bash
+uv run python src/augmix/train.py --dataset cifar10 --arch wrn40_2
+uv run python experiments/table1_cifar_corruption.py --dataset both
+uv run python experiments/table4_ablation.py
+```
