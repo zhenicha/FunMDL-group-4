@@ -17,6 +17,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+import torch.nn.functional as F
 
 def jsd_loss(
     logits_orig: torch.Tensor,
@@ -32,6 +33,7 @@ def jsd_loss(
     JS is computed as:
         M = (p_orig + p_augmix1 + p_augmix2) / 3
         JS = (KL(p_orig‖M) + KL(p_augmix1‖M) + KL(p_augmix2‖M)) / 3
+        CE = cross_entropy(logits_orig, labels) applies softmax internally in PyTorch so we don't pass p_orig.
     Args:
         logits_orig:  (B, C) — model output for original images
         logits_aug1:  (B, C) — model output for first AugMix sample
@@ -42,7 +44,14 @@ def jsd_loss(
     Returns:
         scalar loss
     """
-    raise NotImplementedError
+    p_orig = F.softmax(logits_orig, dim=1)
+    p_aug1 = F.softmax(logits_aug1, dim=1)
+    p_aug2 = F.softmax(logits_aug2, dim=1)
+    M = torch.clamp((p_orig + p_aug1 + p_aug2) / 3, min=1e-7, max=1).log() # avoid log(0) exploding
+    JS = (F.kl_div(M, p_orig, reduction='batchmean') +
+          F.kl_div(M, p_aug1, reduction='batchmean') +
+          F.kl_div(M, p_aug2, reduction='batchmean')) / 3
+    return F.cross_entropy(logits_orig, labels) + lam * JS
 
 
 def train_one_epoch(
