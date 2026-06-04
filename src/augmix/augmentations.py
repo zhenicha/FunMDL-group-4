@@ -9,19 +9,6 @@ import numpy as np
 from PIL import Image, ImageOps
 from typing import Callable
 
-AUGMENTATIONS: list[Callable] = [
-    shear_x,
-    shear_y,
-    translate_x,
-    translate_y,
-    rotate,
-    solarize,
-    posterize,
-    lambda image, smin, smax : autocontrast(image),
-    lambda image, smin, smax : invert(image),
-    lambda image, smin, smax : equalize(image),
-]
-
 # Excluded to stay disjoint from ImageNet-C test corruptions:
 # contrast, color, brightness, sharpness, cutout
 
@@ -51,7 +38,10 @@ def augment_and_mix(image: Image.Image, k: int = 3, alpha: float = 1.0, severity
 
     weights = np.random.dirichlet(np.repeat(alpha, k))
     m = np.random.beta(alpha, alpha)
-    augmented_image = Image.new(image.mode, image.size)
+    
+    # original image to numpy array for math
+    image_np = np.asarray(image, dtype=np.float32)
+    augmented_image_np = np.zeros_like(image_np)
 
     for i in range(k):
         new_image = image.copy()
@@ -60,9 +50,16 @@ def augment_and_mix(image: Image.Image, k: int = 3, alpha: float = 1.0, severity
         for _ in range(depth):
             new_image = augment(new_image, severity_min, severity_max)
 
-        augmented_image = augmented_image + weights[i] * new_image
+        # augmented image to numpy array and add to result
+        new_image_np = np.asarray(new_image, dtype=np.float32)
+        augmented_image_np = augmented_image_np + weights[i] * new_image_np
 
-    return m * image + (1 - m) * augmented_image
+    # Mix: m * original + (1 - m) * augmented
+    result_np = m * image_np + (1 - m) * augmented_image_np
+    
+    # convert back to PIL
+    result_np = np.clip(result_np, 0, 255).astype(np.uint8)
+    return Image.fromarray(result_np, mode=image.mode)
 
 
 
@@ -166,3 +163,17 @@ def random_severity(severity_min: float, severity_max: float) -> float:
     """
     low, high = sorted((severity_min, severity_max))
     return np.random.uniform(low, high)
+
+
+AUGMENTATIONS: list[Callable] = [
+    shear_x,
+    shear_y,
+    translate_x,
+    translate_y,
+    rotate,
+    solarize,
+    posterize,
+    lambda image, smin, smax : autocontrast(image),
+    lambda image, smin, smax : invert(image),
+    lambda image, smin, smax : equalize(image),
+]
