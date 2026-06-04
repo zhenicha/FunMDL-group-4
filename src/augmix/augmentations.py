@@ -49,7 +49,7 @@ def augment_and_mix(image: Image.Image, k: int = 3, alpha: float = 1.0, severity
         x_augmix: mixed image as PIL Image
     """
 
-    weights = np.random.dirichlet(np.repreat(alpha, k))
+    weights = np.random.dirichlet(np.repeat(alpha, k))
     m = np.random.beta(alpha, alpha)
     augmented_image = Image.new(image.mode, image.size)
 
