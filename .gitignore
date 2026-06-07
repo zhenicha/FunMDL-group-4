@@ -7,7 +7,4 @@ dist/
 build/
 .DS_Store
 checkpoints/
-figures/
-data/CIFAR*
-data/*.tar
-data/*.npy
+data
