@@ -73,8 +73,9 @@ def get_cifar_loaders(
     else:
         train_data.transform = transforms.Compose([train_transform, preprocess])
 
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+    pin = torch.cuda.is_available()
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=pin)
+    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin)
 
     return train_loader, test_loader
 
