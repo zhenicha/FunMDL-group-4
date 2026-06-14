@@ -22,9 +22,9 @@ def mean_corruption_error(
     """
     ce_values = []
     for corruption, errs in errors.items():
-        uce = sum(errs)
+        uce = np.mean(errs)
         if alexnet_errors is not None:
-            uce_alexnet = sum(alexnet_errors[corruption])
+            uce_alexnet = np.mean(alexnet_errors[corruption])
             ce_values.append(uce / uce_alexnet)
         else:
             ce_values.append(uce)

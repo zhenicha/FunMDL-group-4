@@ -17,8 +17,15 @@ from torchvision import datasets, transforms
 
 from .augmentations import augment_and_mix
 
-CIFAR_MEAN = (0.4914, 0.4822, 0.4465)
-CIFAR_STD = (0.2023, 0.1994, 0.2010)
+CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
+CIFAR10_STD  = (0.2023, 0.1994, 0.2010)
+CIFAR100_MEAN = (0.5071, 0.4867, 0.4408)
+CIFAR100_STD  = (0.2675, 0.2565, 0.2761)
+
+def get_normalization(dataset: str):
+    if dataset == 'cifar100':
+        return CIFAR100_MEAN, CIFAR100_STD
+    return CIFAR10_MEAN, CIFAR10_STD
 
 
 class AugMixDataset(Dataset):
@@ -57,10 +64,10 @@ def get_cifar_loaders(
         transforms.RandomCrop(32, padding=4)
     ])
     
-    # Preprocessing applied after AugMix 
+    mean, std = get_normalization(dataset)
     preprocess = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(CIFAR_MEAN, CIFAR_STD)
+        transforms.Normalize(mean, std)
     ])
 
     DatasetClass = datasets.CIFAR10 if dataset == 'cifar10' else datasets.CIFAR100
@@ -73,8 +80,9 @@ def get_cifar_loaders(
     else:
         train_data.transform = transforms.Compose([train_transform, preprocess])
 
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+    pin = torch.cuda.is_available()
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=pin)
+    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin)
 
     return train_loader, test_loader
 
@@ -88,13 +96,13 @@ class CIFAR_C(Dataset):
         "saturate", "shot_noise", "snow", "spatter", "speckle_noise", "zoom_blur",
     ]
 
-    def __init__(self, data_root: str | Path, corruption: str, severity: int = None, transform=None):
+    def __init__(self, data_root: str | Path, corruption: str, severity: int = None, transform=None, dataset: str = 'cifar10'):
         data_root = Path(data_root)
         assert corruption in self.CORRUPTIONS or corruption == 'all'
-        
+        mean, std = get_normalization(dataset)
         self.transform = transform or transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(CIFAR_MEAN, CIFAR_STD)
+            transforms.Normalize(mean, std)
         ])
         
         data_path = data_root / f"{corruption}.npy"

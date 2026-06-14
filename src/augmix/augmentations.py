@@ -128,8 +128,8 @@ def posterize(image: Image.Image, severity_min: float, severity_max: float) ->  
     Reduce the number of bits for each color channel.
     The numer of bits to keep per channel should be in the range of [4, 8] and the exact value is calculated using the augmentation severity levels.
     """
-    bits = np.floor(random_severity(severity_min, severity_max) * 5 + 4)
-    new_image = ImageOps.solarize(image, bits)
+    bits = int(np.floor(random_severity(severity_min, severity_max) * 5 + 4))
+    new_image = ImageOps.posterize(image, bits)
     return new_image
 
 

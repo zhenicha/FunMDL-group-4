@@ -121,7 +121,12 @@ def evaluate(model: nn.Module, loader: DataLoader, device: torch.device) -> dict
 
 def train(args: argparse.Namespace) -> None:
     torch.manual_seed(args.seed)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
     
     print(f"Setting up {args.dataset} loaders (AugMix={args.augmix})...")
     train_loader, test_loader = get_cifar_loaders(
