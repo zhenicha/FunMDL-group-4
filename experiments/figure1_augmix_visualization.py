@@ -124,7 +124,10 @@ def main(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
+    p.add_argument("--from-cifar", action="store_true")
+    p.add_argument("--data-root", type=Path, default=Path("data"))
     p.add_argument("--image1", type=Path, default=None, help="First source image")
     p.add_argument("--image2", type=Path, default=None, help="Second source image")
-    p.add_argument("--output", type=Path, default=Path("figures/fig1.pdf"))
+    p.add_argument("--output", type=Path, default=Path("figures/fig1.jpg"))
+    p.add_argument("--seed", type=int, default=0)
     main(p.parse_args())

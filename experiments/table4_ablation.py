@@ -34,12 +34,12 @@ CORRUPTIONS_15 = [
 
 # Paper's reported numbers for Table 4 for reference and checking if results were reproduced
 PAPER_NUMBERS = {
-    "Standard":                          {"cifar10c": 26.9, "cifar100c": 56.4},
-    "AutoAugment*":                      {"cifar10c": 22.6, "cifar100c": 49.8},
-    "Random AutoAugment*":               {"cifar10c": 22.4, "cifar100c": 49.4},
-    "Random AutoAugment* + JSD":         {"cifar10c": 16.6, "cifar100c": 42.1},
-    "AugmentAndMix (No JSD)":            {"cifar10c": 15.7, "cifar100c": 41.2},
-    "AugMix (ours)":                     {"cifar10c": 12.0, "cifar100c": 34.0},
+    "Standard":                          {"cifar10c": 26.9, "cifar100c": 53.3},
+    "AutoAugment*":                      {"cifar10c": 23.9, "cifar100c": 49.6},
+    "Random AutoAugment*":               {"cifar10c": 17.0, "cifar100c": 43.6},
+    "Random AutoAugment* + JSD":         {"cifar10c": 14.7, "cifar100c": 40.8},
+    "AugmentAndMix (No JSD)":            {"cifar10c": 13.1, "cifar100c": 39.8},
+    "AugMix (paper)":                    {"cifar10c": 11.2, "cifar100c": 35.9},
 }
 
 
