@@ -13,6 +13,7 @@ Each forward pass produces three outputs (orig, aug1, aug2) — needed for JSD l
 
 import argparse
 from pathlib import Path
+import sys
 import time
 
 import torch
@@ -20,8 +21,13 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 
-from .datasets import get_cifar_loaders
-from .models import get_model
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from src.augmix.datasets import get_cifar_loaders
+    from src.augmix.models import get_model
+else:
+    from .datasets import get_cifar_loaders
+    from .models import get_model
 
 def jsd_loss(logits_orig, logits_aug1, logits_aug2, labels, lam=12.0):
     """AugMix loss: cross-entropy on clean image + λ * JSD consistency term."""
@@ -172,14 +178,22 @@ def train(args: argparse.Namespace) -> None:
         checkpoint = {
             'epoch': epoch + 1,
             'arch': args.arch,
+            'dataset': args.dataset, 
             'state_dict': model.state_dict(),
             'best_acc': best_acc,
             'optimizer': optimizer.state_dict(),
         }
         
-        torch.save(checkpoint, args.output_dir / f"checkpoint_{args.arch}_latest.pt")
+        # Define the method name based on the boolean flag
+        method = "augmix" if args.augmix else "standard"
+        
+        # Include dataset, arch, and method in the filename
+        filename_latest = f"checkpoint_{args.dataset}_{args.arch}_{method}_latest.pt"
+        filename_best = f"checkpoint_{args.dataset}_{args.arch}_{method}_best.pt"
+        
+        torch.save(checkpoint, args.output_dir / filename_latest)
         if is_best:
-            torch.save(checkpoint, args.output_dir / f"checkpoint_{args.arch}_best.pt")
+            torch.save(checkpoint, args.output_dir / filename_best)
 
 
 def get_args() -> argparse.Namespace:
