@@ -184,13 +184,11 @@ def train(args: argparse.Namespace) -> None:
             'optimizer': optimizer.state_dict(),
         }
         
-        # Define the method name based on the boolean flag
+        # Replace the saving block at the bottom of train.py with this:
         method = "augmix" if args.augmix else "standard"
-        
-        # Include dataset, arch, and method in the filename
         filename_latest = f"checkpoint_{args.dataset}_{args.arch}_{method}_latest.pt"
         filename_best = f"checkpoint_{args.dataset}_{args.arch}_{method}_best.pt"
-        
+
         torch.save(checkpoint, args.output_dir / filename_latest)
         if is_best:
             torch.save(checkpoint, args.output_dir / filename_best)

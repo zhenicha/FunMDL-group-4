@@ -52,7 +52,7 @@ def get_cifar_loaders(
     dataset: str, 
     data_root: str | Path,
     batch_size: int = 128,
-    num_workers: int = 4,
+    num_workers: int = 6,
     use_augmix: bool = True,
 ) -> tuple[DataLoader, DataLoader]:
     
