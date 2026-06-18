@@ -217,6 +217,90 @@ class DenseNet(nn.Module):
         out = out.view(out.size(0), -1)
         return self.linear(out)
 
+
+# ----- ResNeXt-29 (32x4) -----
+
+class ResNeXtBottleneck(nn.Module):
+    expansion = 2
+
+    def __init__(self, in_planes: int, planes: int, cardinality: int, base_width: int, stride: int = 1):
+        super().__init__()
+
+        width = int(planes * (base_width / 64.0)) * cardinality
+
+        self.conv1 = nn.Conv2d(in_planes, width, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(width)
+
+        self.conv2 = nn.Conv2d(width, width, kernel_size=3, stride=stride, padding=1, groups=cardinality, bias=False)
+        self.bn2 = nn.BatchNorm2d(width)
+
+        self.conv3 = nn.Conv2d(width, planes * self.expansion, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(planes * self.expansion)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != planes * self.expansion:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, planes * self.expansion, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(planes * self.expansion)
+            )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.bn2(self.conv2(out)))
+        out = self.bn3(self.conv3(out))
+        out += self.shortcut(x)
+        return F.relu(out)
+
+
+class ResNeXt(nn.Module):
+    def __init__(self, num_blocks: int = 3, cardinality: int = 32, base_width: int = 4, num_classes: int = 10):
+        super().__init__()
+
+        self.cardinality = cardinality
+        self.base_width = base_width
+        self.in_planes = 64
+
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(64)
+
+        self.layer1 = self._make_layer(64, num_blocks, stride=1)
+        self.layer2 = self._make_layer(128, num_blocks, stride=2)
+        self.layer3 = self._make_layer(256, num_blocks, stride=2)
+
+        self.classifier = nn.Linear(256 * ResNeXtBottleneck.expansion, num_classes)
+        self._init_weights()
+
+    def _make_layer(self, planes: int, num_blocks: int, stride: int) -> nn.Sequential:
+        strides = [stride] + [1] * (num_blocks - 1)
+        layers = []
+
+        for s in strides:
+            layers.append(ResNeXtBottleneck(self.in_planes, planes, self.cardinality, self.base_width, s))
+            self.in_planes = planes * ResNeXtBottleneck.expansion
+
+        return nn.Sequential(*layers)
+
+    def _init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, 0, 0.01)
+                nn.init.constant_(m.bias, 0)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = F.adaptive_avg_pool2d(out, 1)
+        out = out.view(out.size(0), -1)
+        return self.classifier(out)
+
+
 # Model Retrieval
 def get_model(arch: str, num_classes: int) -> nn.Module:
     """Return an untrained model by architecture name."""
@@ -227,7 +311,7 @@ def get_model(arch: str, num_classes: int) -> nn.Module:
     elif arch == 'densenet100':
         return DenseNet(depth=100, num_classes=num_classes, growth_rate=12)
     elif arch == 'resnext29_32x4':
-        raise NotImplementedError("ResNeXt-29 (32x4) requires specific CIFAR implementation.")
+        return ResNeXt(num_blocks=3, cardinality=32, base_width=4, num_classes=num_classes)
     elif arch == 'resnet50':
         raise NotImplementedError("ResNet-50 not yet linked. Use torchvision.models.resnet50.")
     else:
