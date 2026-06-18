@@ -218,10 +218,10 @@ class DenseNet(nn.Module):
         return self.linear(out)
 
 
-# ----- ResNeXt-29 (32x4) -----
+# ----- ResNeXt-29 (32x4d) -----
 
 class ResNeXtBottleneck(nn.Module):
-    expansion = 2
+    expansion = 4 
 
     def __init__(self, in_planes: int, planes: int, cardinality: int, base_width: int, stride: int = 1):
         super().__init__()
@@ -230,10 +230,8 @@ class ResNeXtBottleneck(nn.Module):
 
         self.conv1 = nn.Conv2d(in_planes, width, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(width)
-
         self.conv2 = nn.Conv2d(width, width, kernel_size=3, stride=stride, padding=1, groups=cardinality, bias=False)
         self.bn2 = nn.BatchNorm2d(width)
-
         self.conv3 = nn.Conv2d(width, planes * self.expansion, kernel_size=1, bias=False)
         self.bn3 = nn.BatchNorm2d(planes * self.expansion)
 
@@ -273,11 +271,9 @@ class ResNeXt(nn.Module):
     def _make_layer(self, planes: int, num_blocks: int, stride: int) -> nn.Sequential:
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
-
         for s in strides:
             layers.append(ResNeXtBottleneck(self.in_planes, planes, self.cardinality, self.base_width, s))
             self.in_planes = planes * ResNeXtBottleneck.expansion
-
         return nn.Sequential(*layers)
 
     def _init_weights(self):
@@ -288,7 +284,7 @@ class ResNeXt(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, 0, 0.01)
+                nn.init.kaiming_normal_(m.weight)
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
