@@ -67,7 +67,8 @@ def train_one_epoch(
     optimizer: torch.optim.Optimizer,
     scheduler: torch.optim.lr_scheduler.LRScheduler,
     device: torch.device,
-    lam: float = 12.0
+    lam: float = 12.0,
+    max_grad_norm: float | None = None,
 ) -> dict[str, float]:
     
     model.train()
@@ -97,6 +98,8 @@ def train_one_epoch(
             preds = logits.argmax(dim=1)
 
         loss.backward()
+        if max_grad_norm is not None:
+            nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
         optimizer.step()
         scheduler.step() # Cosine schedule steps per batch
 
@@ -163,7 +166,7 @@ def train(args: argparse.Namespace) -> None:
     for epoch in range(args.epochs):
         start_time = time.time()
         
-        train_metrics = train_one_epoch(model, train_loader, optimizer, scheduler, device, lam=args.jsd_lambda)
+        train_metrics = train_one_epoch(model, train_loader, optimizer, scheduler, device, lam=args.jsd_lambda, max_grad_norm=args.max_grad_norm)
         test_metrics = evaluate(model, test_loader, device)
 
         epoch_time = time.time() - start_time
@@ -206,6 +209,8 @@ def get_args() -> argparse.Namespace:
     p.add_argument("--weight-decay", type=float, default=5e-4)
     p.add_argument("--augmix", action=argparse.BooleanOptionalAction, default=True)
     p.add_argument("--jsd-lambda", type=float, default=12.0)
+    p.add_argument("--max-grad-norm", type=float, default=None,
+                   help="Clip gradient norm to this value (None = no clipping). Use 1.0 for ResNeXt.")
     p.add_argument("--seed", type=int, default=0)
     return p.parse_args()
 
