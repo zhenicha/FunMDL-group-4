@@ -4,6 +4,8 @@ Reproduction of **AugMix: A Simple Data Processing Method to Improve Robustness 
 
 Full re-implementation from scratch. Experiments focus on CIFAR-10/100 (ImageNet out of scope due to compute power needed).
 
+We specifically targeted the evaluation of standard training versus AugMix across four key architectures: AllConvNet, DenseNet-BC (k=12, d=100), WideResNet 40-2, and ResNeXt-29 32x4. We also recreated the original paper's visual comparisons (e.g., AugMix vs. CutOut, MixUp, and CutMix).
+
 ## Install
 
 Requires [uv](https://github.com/astral-sh/uv).
