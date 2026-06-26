@@ -25,16 +25,11 @@ src/augmix/
 ├── models.py          # WideResNet, ResNeXt, DenseNet, AllConvNet
 ├── datasets.py        # CIFAR-10/100 + -C / -P variants
 ├── metrics.py         # mCE, mFP, RMS calibration error, Brier score
-└── train.py           # training loop
+├── test.py            # Sanity check for pipeline
+└── train.py           # Training loop
 
 experiments/
 ├── figure1_augmix_visualization.py   # AugMix vs CutOut/MixUp/CutMix
-├── figure3_augmentation_drift.py     # image drift from deep aug chains
-├── figure5_bar_chart.py              # CIFAR-10-C error bar chart
-├── figure6_cifar_p_calibration.py    # mFP + calibration (Tables 5 & 6)
-├── figure9_fourier_sensitivity.py    # Fourier sensitivity heatmap
-├── figure10_augmentation_ops.py      # illustration of each aug op
-├── figure12_per_corruption.py        # per-corruption error breakdown
 ├── table1_cifar_corruption.py        # CIFAR-10/100-C across architectures
 └── table4_ablation.py                # ablation: diversity / JSD / mixing
 ```
